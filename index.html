@@ -252,7 +252,7 @@
 
 	const upgrades = [
     		{ id: 'headphones', name: 'Miku\'s Headphones', cost: 15, sps: 0.1, count: 0, icon: '🎧', image: 'assets/headphones.jpg', zoom: '150%' },
-    		{ id: 'recipe', name: 'Matcha Recipe Book', cost: 100, sps: 1, count: 0, icon: '📚', image: 'assets/recipe-book.png' },
+    		{ id: 'recipe', name: 'Matcha Recipe Book', cost: 100, sps: 1, count: 0, icon: '📚', image: 'assets/recipe-book.png', zoom: '80%' },
     		{ id: 'documentary', name: 'Sengoku Documentary', cost: 1100, sps: 8, count: 0, icon: '📺', image: 'assets/documentary.png' },
     		{ id: 'tutor', name: 'Private Tutor (Fuutarou)', cost: 12000, sps: 47, count: 0, icon: '👨‍🏫', image: 'assets/tutor.png' }
 	];
@@ -272,30 +272,37 @@
             }, 100);
         }
 
-        function renderShop() {
-            shopContainer.innerHTML = '';
-            upgrades.forEach((upgrade, index) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'shop-item disabled';
-                itemDiv.id = `upgrade-${upgrade.id}`;
-                itemDiv.onclick = () => buyUpgrade(index);
-
-                // Check if upgrade specifies a background image asset path, otherwise use emoji text
-                const iconContent = upgrade.image ? '' : upgrade.icon;
-                const inlineStyle = upgrade.image ? `style="background-image: url('${upgrade.image}');"` : '';
-
-                itemDiv.innerHTML = `
-                    <div class="item-icon" id="icon-${upgrade.id}" ${inlineStyle}>${iconContent}</div>
-                    <div class="item-details">
-                        <div class="item-name">${upgrade.name}</div>
-                        <div class="item-effect">+${upgrade.sps} Sodas/sec</div>
-                        <div class="item-cost">Cost: <span id="cost-${upgrade.id}">${Math.floor(upgrade.cost)}</span></div>
-                    </div>
-                    <div class="item-count" id="count-${upgrade.id}">0</div>
-                `;
-                shopContainer.appendChild(itemDiv);
-            });
-        }
+		function renderShop() {
+		    shopContainer.innerHTML = '';
+		    upgrades.forEach((upgrade, index) => {
+		        const itemDiv = document.createElement('div');
+		        itemDiv.className = 'shop-item disabled';
+		        itemDiv.id = `upgrade-${upgrade.id}`;
+		        itemDiv.onclick = () => buyUpgrade(index);
+		
+		        // Check if upgrade specifies an image asset path
+		        const iconContent = upgrade.image ? '' : upgrade.icon;
+		        
+		        // 👇 UPDATED LOGIC FOR DYNAMIC ZOOM & POSITION 👇
+		        let inlineStyle = '';
+		        if (upgrade.image) {
+		            const size = upgrade.zoom ? upgrade.zoom : 'cover';
+		            const pos = upgrade.position ? upgrade.position : 'center';
+		            inlineStyle = `style="background-image: url('${upgrade.image}'); background-size: ${size}; background-position: ${pos};"`;
+		        }
+		
+		        itemDiv.innerHTML = `
+		            <div class="item-icon" id="icon-${upgrade.id}" ${inlineStyle}>${iconContent}</div>
+		            <div class="item-details">
+		                <div class="item-name">${upgrade.name}</div>
+		                <div class="item-effect">+${upgrade.sps} Sodas/sec</div>
+		                <div class="item-cost">Cost: <span id="cost-${upgrade.id}">${Math.floor(upgrade.cost)}</span></div>
+		            </div>
+		            <div class="item-count" id="count-${upgrade.id}">0</div>
+		        `;
+		        shopContainer.appendChild(itemDiv);
+		    });
+		}
 
         function updateUI() {
             sodaCountEl.textContent = `${Math.floor(gameData.sodas)} Matcha${Math.floor(gameData.sodas) === 1 ? '' : 's'}`;
