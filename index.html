@@ -88,22 +88,23 @@
         }
 
         /* Replace the text innerHTML with a clean background graphic */
-	.miku-clicker {
-    		width: 220px;
-    		height: 220px;
-    		border-radius: 50%;
-    		background-color: var(--miku-blue);
-    		border: 8px solid white;
-    		box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    		cursor: pointer;
-    		transition: transform 0.05s ease;
-    
-    		/* ADD THESE TWO LINES */
-    		background-image: url('assets/miku-avatar.png'); 
-    		color: transparent; /* Hides the placeholder 'Click Miku!' text */
-			background-size: cover;     /* Forces the image to scale and fill the entire circle */
-    		background-position: center; /* Centers the image perfectly so it doesn't crop weirdly */
-	}
+        .miku-clicker {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background-color: var(--miku-blue);
+            border: 8px solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.05s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: transparent; /* Hides the placeholder text smoothly */
+            background-image: url('assets/miku-avatar.png'); 
+            background-size: cover;     /* Forces the image to scale and fill the entire circle */
+            background-position: center; /* Centers the image perfectly so it doesn't crop weirdly */
+        }
 
         .miku-clicker:active {
             transform: scale(0.95);
@@ -217,13 +218,47 @@
             min-width: 30px;
             text-align: right;
         }
+
+        /* Control footer area for save options */
+        .shop-footer {
+            padding: 15px;
+            border-top: 2px solid #e2e8f0;
+            background: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-reset {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .btn-reset:hover {
+            background-color: #dc2626;
+        }
+
+        .save-indicator {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
     </style>
 </head>
 <body>
 
     <!-- Left Column: Clicker Area -->
     <div class="clicker-section">
-        <!-- Background Video Wallaper -->
+        <!-- Background Video Wallpaper -->
         <video class="video-bg" autoplay muted loop playsinline>
             <source src="https://motionbgs.com/media/4553/miku-nakano.960x540.mp4" type="video/mp4">
         </video>
@@ -235,9 +270,7 @@
                 <p id="sps-count">0 per second</p>
             </div>
             
-            <div class="miku-clicker" id="miku-btn">
-                🎧<br>Click Miku!
-            </div>
+            <div class="miku-clicker" id="miku-btn"></div>
         </div>
     </div>
 
@@ -245,64 +278,77 @@
     <div class="shop-section">
         <h2 class="shop-header">Miku's Study Corner</h2>
         <div class="shop-items" id="shop-container"></div>
+        
+        <!-- Bottom controls with saving mechanics layout -->
+        <div class="shop-footer">
+            <span class="save-indicator" id="save-status">Progress Saved!</span>
+            <button class="btn-reset" onclick="resetGame()">Reset Progress</button>
+        </div>
     </div>
 
     <script>
-        let gameData = { sodas: 0, totalSodasClicked: 0, lodasPerSecond: 0, sodasPerSecond: 0 };
+        let gameData = { sodas: 0, totalSodasClicked: 0, sodasPerSecond: 0 };
 
-	const upgrades = [
-    		{ id: 'headphones', name: 'Miku\'s Headphones', cost: 15, sps: 0.1, count: 0, icon: '🎧', image: 'assets/headphones.jpg', zoom: '150%' },
-    		{ id: 'recipe', name: 'Matcha Recipe Book', cost: 100, sps: 1, count: 0, icon: '📚', image: 'assets/recipe-book.png', zoom: '80%' },
-    		{ id: 'documentary', name: 'Sengoku Documentary', cost: 1100, sps: 8, count: 0, icon: '📺', image: 'assets/documentary.png' },
-    		{ id: 'tutor', name: 'Private Tutor (Fuutarou)', cost: 12000, sps: 47, count: 0, icon: '👨‍🏫', image: 'assets/tutor.png' }
-	];
+        const upgrades = [
+            { id: 'headphones', name: 'Miku\'s Headphones', cost: 15, baseCost: 15, sps: 0.1, count: 0, icon: '🎧', image: 'assets/headphones.jpg', zoom: '150%' },
+            { id: 'recipe', name: 'Matcha Recipe Book', cost: 100, baseCost: 100, sps: 1, count: 0, icon: '📚', image: 'assets/recipe-book.png', zoom: '80%' },
+            { id: 'documentary', name: 'Sengoku Documentary', cost: 1100, baseCost: 1100, sps: 8, count: 0, icon: '📺', image: 'assets/documentary.png' },
+            { id: 'tutor', name: 'Private Tutor (Fuutarou)', cost: 12000, baseCost: 12000, sps: 47, count: 0, icon: '👨‍🏫', image: 'assets/tutor.png' }
+        ];
 
         const sodaCountEl = document.getElementById('soda-count');
         const spsCountEl = document.getElementById('sps-count');
         const mikuBtn = document.getElementById('miku-btn');
         const clickArea = document.getElementById('click-area');
         const shopContainer = document.getElementById('shop-container');
+        const saveStatusEl = document.getElementById('save-status');
 
         function init() {
+            loadGame();
             renderShop();
             updateUI();
+            
+            // Core logic loop tick (updates decimal positions smoothly)
             setInterval(() => {
                 gameData.sodas += (gameData.sodasPerSecond / 10);
                 updateUI();
             }, 100);
+
+            // Automated backup interval: Runs every 10 seconds background loop
+            setInterval(() => {
+                saveGame(true); // true means silent, background save
+            }, 10000);
         }
 
-		function renderShop() {
-		    shopContainer.innerHTML = '';
-		    upgrades.forEach((upgrade, index) => {
-		        const itemDiv = document.createElement('div');
-		        itemDiv.className = 'shop-item disabled';
-		        itemDiv.id = `upgrade-${upgrade.id}`;
-		        itemDiv.onclick = () => buyUpgrade(index);
+        function renderShop() {
+            shopContainer.innerHTML = '';
+            upgrades.forEach((upgrade, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'shop-item disabled';
+                itemDiv.id = `upgrade-${upgrade.id}`;
+                itemDiv.onclick = () => buyUpgrade(index);
 		
-		        // Check if upgrade specifies an image asset path
-		        const iconContent = upgrade.image ? '' : upgrade.icon;
+                const iconContent = upgrade.image ? '' : upgrade.icon;
 		        
-		        // 👇 UPDATED LOGIC FOR DYNAMIC ZOOM & POSITION 👇
-		        let inlineStyle = '';
-		        if (upgrade.image) {
-		            const size = upgrade.zoom ? upgrade.zoom : 'cover';
-		            const pos = upgrade.position ? upgrade.position : 'center';
-		            inlineStyle = `style="background-image: url('${upgrade.image}'); background-size: ${size}; background-position: ${pos};"`;
-		        }
+                let inlineStyle = '';
+                if (upgrade.image) {
+                    const size = upgrade.zoom ? upgrade.zoom : 'cover';
+                    const pos = upgrade.position ? upgrade.position : 'center';
+                    inlineStyle = `style="background-image: url('${upgrade.image}'); background-size: ${size}; background-position: ${pos};"`;
+                }
 		
-		        itemDiv.innerHTML = `
-		            <div class="item-icon" id="icon-${upgrade.id}" ${inlineStyle}>${iconContent}</div>
-		            <div class="item-details">
-		                <div class="item-name">${upgrade.name}</div>
-		                <div class="item-effect">+${upgrade.sps} Sodas/sec</div>
-		                <div class="item-cost">Cost: <span id="cost-${upgrade.id}">${Math.floor(upgrade.cost)}</span></div>
-		            </div>
-		            <div class="item-count" id="count-${upgrade.id}">0</div>
-		        `;
-		        shopContainer.appendChild(itemDiv);
-		    });
-		}
+                itemDiv.innerHTML = `
+                    <div class="item-icon" id="icon-${upgrade.id}" ${inlineStyle}>${iconContent}</div>
+                    <div class="item-details">
+                        <div class="item-name">${upgrade.name}</div>
+                        <div class="item-effect">+${upgrade.sps} Sodas/sec</div>
+                        <div class="item-cost">Cost: <span id="cost-${upgrade.id}">${Math.floor(upgrade.cost)}</span></div>
+                    </div>
+                    <div class="item-count" id="count-${upgrade.id}">0</div>
+                `;
+                shopContainer.appendChild(itemDiv);
+            });
+        }
 
         function updateUI() {
             sodaCountEl.textContent = `${Math.floor(gameData.sodas)} Matcha${Math.floor(gameData.sodas) === 1 ? '' : 's'}`;
@@ -313,13 +359,15 @@
                 const costEl = document.getElementById(`cost-${upgrade.id}`);
                 const countEl = document.getElementById(`count-${upgrade.id}`);
                 
-                costEl.textContent = Math.floor(upgrade.cost);
-                countEl.textContent = upgrade.count;
+                if(costEl) costEl.textContent = Math.floor(upgrade.cost);
+                if(countEl) countEl.textContent = upgrade.count;
 
-                if (gameData.sodas >= upgrade.cost) {
-                    itemDiv.classList.remove('disabled');
-                } else {
-                    itemDiv.classList.add('disabled');
+                if (itemDiv) {
+                    if (gameData.sodas >= upgrade.cost) {
+                        itemDiv.classList.remove('disabled');
+                    } else {
+                        itemDiv.classList.add('disabled');
+                    }
                 }
             });
         }
@@ -349,6 +397,7 @@
                 upgrade.cost = upgrade.cost * 1.15;
                 recalculateSPS();
                 updateUI();
+                saveGame(true); // Save instantly on purchases so actions aren't lost
             }
         }
 
@@ -356,6 +405,67 @@
             let totalSPS = 0;
             upgrades.forEach(up => totalSPS += up.count * up.sps);
             gameData.sodasPerSecond = totalSPS;
+        }
+
+        /* LOCAL STORAGE DATA HANDLING INTERACTION WRAPPERS */
+        function saveGame(isSilent = false) {
+            const saveData = {
+                sodas: gameData.sodas,
+                totalSodasClicked: gameData.totalSodasClicked,
+                // Map the specific user-modified states of our upgrades
+                upgradesState: upgrades.map(up => ({ id: up.id, count: up.count, cost: up.cost }))
+            };
+            
+            localStorage.setItem('mikuClicker_save', JSON.stringify(saveData));
+            
+            if (isSilent) {
+                saveStatusEl.style.opacity = '1';
+                setTimeout(() => { saveStatusEl.style.opacity = '0'; }, 1500);
+            }
+        }
+
+        function loadGame() {
+            const rawSave = localStorage.getItem('mikuClicker_save');
+            if (!rawSave) return; // Exit if no prior data exists
+            
+            try {
+                const parsedData = JSON.parse(rawSave);
+                gameData.sodas = parsedData.sodas || 0;
+                gameData.totalSodasClicked = parsedData.totalSodasClicked || 0;
+                
+                // Reconstruct upgrades profile matching unique structural IDs
+                if (parsedData.upgradesState) {
+                    parsedData.upgradesState.forEach(savedUp => {
+                        const originalUpgrade = upgrades.find(up => up.id === savedUp.id);
+                        if (originalUpgrade) {
+                            originalUpgrade.count = savedUp.count || 0;
+                            originalUpgrade.cost = savedUp.cost || originalUpgrade.baseCost;
+                        }
+                    });
+                }
+                recalculateSPS();
+            } catch (err) {
+                console.error("Failed parsing saved data pipeline initialization profile.", err);
+            }
+        }
+
+        function resetGame() {
+            if (confirm("Are you sure you want to reset your study corner and clear all progress?")) {
+                localStorage.removeItem('mikuClicker_save');
+                
+                // Set conditions back to default baseline configurations
+                gameData.sodas = 0;
+                gameData.totalSodasClicked = 0;
+                gameData.sodasPerSecond = 0;
+                
+                upgrades.forEach(up => {
+                    up.count = 0;
+                    up.cost = up.baseCost;
+                });
+                
+                renderShop();
+                updateUI();
+            }
         }
 
         init();
