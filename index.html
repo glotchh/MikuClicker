@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miku Nakano Clicker</title>
+    <style>
+        :root {
+            --miku-blue: #4a90e2;
+            --miku-light-blue: #a3c9f1;
+            --miku-dark: #2c3e50;
+            --miku-pink: #ffb6c1;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+            color: var(--miku-dark);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Left Column: Clicking Area */
+        .clicker-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 4px solid var(--miku-blue);
+            position: relative;
+            overflow: hidden; /* Keeps the video container inside bounds */
+        }
+
+        /* Video Wallpaper styling */
+        .video-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            z-index: 1;
+        }
+
+        /* Frosted glass overlay so the game elements pop over the video */
+        .clicker-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .score-display {
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 15px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 2px solid white;
+        }
+
+        .score-display h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: var(--miku-dark);
+        }
+
+        .score-display p {
+            font-size: 1.2rem;
+            margin: 5px 0 0 0;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        /* Replace the text innerHTML with a clean background graphic */
+	.miku-clicker {
+    		width: 220px;
+    		height: 220px;
+    		border-radius: 50%;
+    		background-color: var(--miku-blue);
+    		border: 8px solid white;
+    		box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    		cursor: pointer;
+    		transition: transform 0.05s ease;
+    
+    		/* ADD THESE TWO LINES */
+    		background-image: url('assets/miku-avatar.png'); 
+    		color: transparent; /* Hides the placeholder 'Click Miku!' text */
+	}
+
+        .miku-clicker:active {
+            transform: scale(0.95);
+        }
+
+        /* Floating text animation */
+        .floating-text {
+            position: absolute;
+            color: #0284c7;
+            font-weight: 900;
+            font-size: 1.75rem;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+            text-shadow: 2px 2px 0px white;
+            z-index: 10;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-120px) scale(0.8); }
+        }
+
+        /* Right Column: Upgrades Shop */
+        .shop-section {
+            width: 400px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.05);
+            z-index: 3; /* Keeps shop above everything */
+        }
+
+        .shop-header {
+            background-color: var(--miku-blue);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin: 0;
+        }
+
+        .shop-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .shop-item {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .shop-item:hover {
+            border-color: var(--miku-blue);
+            background: #f0f7ff;
+        }
+
+        .shop-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
+
+        .item-icon {
+            width: 50px;
+            height: 50px;
+            background-color: var(--miku-light-blue);
+            border-radius: 8px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 2px;
+        }
+
+        .item-effect {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .item-cost {
+            font-weight: bold;
+            color: #22c55e;
+        }
+
+        .item-count {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--miku-blue);
+            margin-left: 15px;
+            min-width: 30px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Left Column: Clicker Area -->
+    <div class="clicker-section">
+        <!-- Background Video Wallaper -->
+        <video class="video-bg" autoplay muted loop playsinline>
+            <source src="https://motionbgs.com/media/4553/miku-nakano.960x540.mp4" type="video/mp4">
+        </video>
+
+        <!-- Dynamic Game Content Layer -->
+        <div class="clicker-content" id="click-area">
+            <div class="score-display">
+                <h1 id="soda-count">0 Matchas</h1>
+                <p id="sps-count">0 per second</p>
+            </div>
+            
+            <div class="miku-clicker" id="miku-btn">
+                🎧<br>Click Miku!
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Shop Area -->
+    <div class="shop-section">
+        <h2 class="shop-header">Miku's Study Corner</h2>
+        <div class="shop-items" id="shop-container"></div>
+    </div>
+
+    <script>
+        let gameData = { sodas: 0, totalSodasClicked: 0, lodasPerSecond: 0, sodasPerSecond: 0 };
+
+	const upgrades = [
+    		{ id: 'headphones', name: 'Miku\'s Headphones', cost: 15, sps: 0.1, count: 0, icon: '🎧', image: 'assets/headphones.jpg' },
+    		{ id: 'recipe', name: 'Matcha Recipe Book', cost: 100, sps: 1, count: 0, icon: '📚', image: 'assets/recipe-book.png' },
+    		{ id: 'documentary', name: 'Sengoku Documentary', cost: 1100, sps: 8, count: 0, icon: '📺', image: 'assets/documentary.png' },
+    		{ id: 'tutor', name: 'Private Tutor (Fuutarou)', cost: 12000, sps: 47, count: 0, icon: '👨‍🏫', image: 'assets/tutor.png' }
+	];
+
+        const sodaCountEl = document.getElementById('soda-count');
+        const spsCountEl = document.getElementById('sps-count');
+        const mikuBtn = document.getElementById('miku-btn');
+        const clickArea = document.getElementById('click-area');
+        const shopContainer = document.getElementById('shop-container');
+
+        function init() {
+            renderShop();
+            updateUI();
+            setInterval(() => {
+                gameData.sodas += (gameData.sodasPerSecond / 10);
+                updateUI();
+            }, 100);
+        }
+
+        function renderShop() {
+            shopContainer.innerHTML = '';
+            upgrades.forEach((upgrade, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'shop-item disabled';
+                itemDiv.id = `upgrade-${upgrade.id}`;
+                itemDiv.onclick = () => buyUpgrade(index);
+
+                // Check if upgrade specifies a background image asset path, otherwise use emoji text
+                const iconContent = upgrade.image ? '' : upgrade.icon;
+                const inlineStyle = upgrade.image ? `style="background-image: url('${upgrade.image}');"` : '';
+
+                itemDiv.innerHTML = `
+                    <div class="item-icon" id="icon-${upgrade.id}" ${inlineStyle}>${iconContent}</div>
+                    <div class="item-details">
+                        <div class="item-name">${upgrade.name}</div>
+                        <div class="item-effect">+${upgrade.sps} Sodas/sec</div>
+                        <div class="item-cost">Cost: <span id="cost-${upgrade.id}">${Math.floor(upgrade.cost)}</span></div>
+                    </div>
+                    <div class="item-count" id="count-${upgrade.id}">0</div>
+                `;
+                shopContainer.appendChild(itemDiv);
+            });
+        }
+
+        function updateUI() {
+            sodaCountEl.textContent = `${Math.floor(gameData.sodas)} Matcha${Math.floor(gameData.sodas) === 1 ? '' : 's'}`;
+            spsCountEl.textContent = `${gameData.sodasPerSecond.toFixed(1)} per second`;
+
+            upgrades.forEach(upgrade => {
+                const itemDiv = document.getElementById(`upgrade-${upgrade.id}`);
+                const costEl = document.getElementById(`cost-${upgrade.id}`);
+                const countEl = document.getElementById(`count-${upgrade.id}`);
+                
+                costEl.textContent = Math.floor(upgrade.cost);
+                countEl.textContent = upgrade.count;
+
+                if (gameData.sodas >= upgrade.cost) {
+                    itemDiv.classList.remove('disabled');
+                } else {
+                    itemDiv.classList.add('disabled');
+                }
+            });
+        }
+
+        mikuBtn.addEventListener('click', (e) => {
+            gameData.sodas += 1;
+            gameData.totalSodasClicked += 1;
+            createFloatingText(e.clientX, e.clientY, "+1");
+            updateUI();
+        });
+
+        function createFloatingText(x, y, text) {
+            const el = document.createElement('div');
+            el.className = 'floating-text';
+            el.style.left = `${x}px`;
+            el.style.top = `${y}px`;
+            el.textContent = text;
+            clickArea.appendChild(el);
+            el.addEventListener('animationend', () => el.remove());
+        }
+
+        function buyUpgrade(index) {
+            const upgrade = upgrades[index];
+            if (gameData.sodas >= upgrade.cost) {
+                gameData.sodas -= upgrade.cost;
+                upgrade.count++;
+                upgrade.cost = upgrade.cost * 1.15;
+                recalculateSPS();
+                updateUI();
+            }
+        }
+
+        function recalculateSPS() {
+            let totalSPS = 0;
+            upgrades.forEach(up => totalSPS += up.count * up.sps);
+            gameData.sodasPerSecond = totalSPS;
+        }
+
+        init();
+    </script>
+</body>
+</html>
