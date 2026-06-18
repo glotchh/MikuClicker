@@ -10,6 +10,7 @@
             --miku-light-blue: #a3c9f1;
             --miku-dark: #2c3e50;
             --miku-pink: #ffb6c1;
+            --miku-purple: #8b5cf6;
         }
 
         body {
@@ -32,10 +33,9 @@
             justify-content: center;
             border-right: 4px solid var(--miku-blue);
             position: relative;
-            overflow: hidden; /* Keeps the video container inside bounds */
+            overflow: hidden;
         }
 
-        /* Video Wallpaper styling */
         .video-bg {
             position: absolute;
             top: 50%;
@@ -49,7 +49,6 @@
             z-index: 1;
         }
 
-        /* Frosted glass overlay so the game elements pop over the video */
         .clicker-content {
             position: relative;
             z-index: 2;
@@ -87,7 +86,13 @@
             font-weight: 600;
         }
 
-        /* Replace the text innerHTML with a clean background graphic */
+        .prestige-display {
+            font-size: 0.95rem;
+            color: var(--miku-purple);
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
         .miku-clicker {
             width: 220px;
             height: 220px;
@@ -100,17 +105,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color: transparent; /* Hides the placeholder text smoothly */
+            color: transparent; 
             background-image: url('assets/miku-avatar.png'); 
-            background-size: cover;     /* Forces the image to scale and fill the entire circle */
-            background-position: center; /* Centers the image perfectly so it doesn't crop weirdly */
+            background-size: cover;     
+            background-position: center; 
         }
 
         .miku-clicker:active {
             transform: scale(0.95);
         }
 
-        /* Floating text animation */
         .floating-text {
             position: absolute;
             color: #0284c7;
@@ -127,14 +131,14 @@
             100% { opacity: 0; transform: translateY(-120px) scale(0.8); }
         }
 
-        /* Right Column: Upgrades Shop */
+        /* Right Column: Shop Area */
         .shop-section {
             width: 400px;
             background: white;
             display: flex;
             flex-direction: column;
             box-shadow: -5px 0 15px rgba(0,0,0,0.05);
-            z-index: 3; /* Keeps shop above everything */
+            z-index: 3; 
         }
 
         .shop-header {
@@ -190,40 +194,57 @@
             background-repeat: no-repeat;
         }
 
-        .item-details {
-            flex: 1;
-        }
+        .item-details { flex: 1; }
+        .item-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 2px; }
+        .item-effect { font-size: 0.85rem; color: #64748b; }
+        .item-cost { font-weight: bold; color: #22c55e; }
+        .item-count { font-size: 1.5rem; font-weight: bold; color: var(--miku-blue); margin-left: 15px; min-width: 30px; text-align: right; }
 
-        .item-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-bottom: 2px;
+        /* Cloud Sync Panel Styling */
+        .cloud-panel {
+            background: #f1f5f9;
+            border: 2px dashed #cbd5e1;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-
-        .item-effect {
+        .cloud-input {
+            width: calc(100% - 16px);
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
             font-size: 0.85rem;
-            color: #64748b;
         }
-
-        .item-cost {
+        .cloud-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-cloud {
+            flex: 1;
+            background: var(--miku-blue);
+            color: white;
+            border: none;
+            padding: 6px;
             font-weight: bold;
-            color: #22c55e;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
         }
+        .btn-cloud:hover { background: #357abd; }
 
-        .item-count {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--miku-blue);
-            margin-left: 15px;
-            min-width: 30px;
-            text-align: right;
-        }
-
-        /* Control footer area for save options */
         .shop-footer {
             padding: 15px;
             border-top: 2px solid #e2e8f0;
             background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -240,9 +261,32 @@
             font-size: 0.85rem;
             transition: background 0.2s;
         }
+        .btn-reset:hover { background-color: #dc2626; }
 
-        .btn-reset:hover {
-            background-color: #dc2626;
+        .btn-prestige {
+            background-color: var(--miku-purple);
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(139, 92, 246, 0.2);
+        }
+
+        .btn-prestige:hover:not(.disabled) {
+            background-color: #7c3aed;
+            transform: translateY(-1px);
+        }
+
+        .btn-prestige.disabled {
+            background-color: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
         }
 
         .save-indicator {
@@ -256,38 +300,49 @@
 </head>
 <body>
 
-    <!-- Left Column: Clicker Area -->
     <div class="clicker-section">
-        <!-- Background Video Wallpaper -->
         <video class="video-bg" autoplay muted loop playsinline>
             <source src="https://motionbgs.com/media/4553/miku-nakano.960x540.mp4" type="video/mp4">
         </video>
 
-        <!-- Dynamic Game Content Layer -->
         <div class="clicker-content" id="click-area">
             <div class="score-display">
                 <h1 id="soda-count">0 Matchas</h1>
                 <p id="sps-count">0 per second</p>
+                <div class="prestige-display" id="ep-count">Exam Points: 0 (+0% Global Boost)</div>
             </div>
-            
             <div class="miku-clicker" id="miku-btn"></div>
         </div>
     </div>
 
-    <!-- Right Column: Shop Area -->
     <div class="shop-section">
         <h2 class="shop-header">Miku's Study Corner</h2>
-        <div class="shop-items" id="shop-container"></div>
+        <div class="shop-items" id="shop-container">
+            <!-- Cloud Sync Submenu inside shop -->
+            <div class="cloud-panel">
+                <div style="font-size: 0.85rem; font-weight: bold; color: var(--miku-dark);">🌐 Cross-Device Sync Profile</div>
+                <input type="text" class="cloud-input" id="cloud-username" placeholder="Create or Enter a unique username...">
+                <div class="cloud-buttons">
+                    <button class="btn-cloud" onclick="cloudSave()">Save to Cloud</button>
+                    <button class="btn-cloud" onclick="cloudLoad()">Load from Cloud</button>
+                </div>
+            </div>
+            <div id="actual-items"></div>
+        </div>
         
-        <!-- Bottom controls with saving mechanics layout -->
         <div class="shop-footer">
-            <span class="save-indicator" id="save-status">Progress Saved!</span>
-            <button class="btn-reset" onclick="resetGame()">Reset Progress</button>
+            <button class="btn-prestige disabled" id="prestige-btn" onclick="prestigeGame()">
+                Take Exam (Requires 25k Matchas)
+            </button>
+            <div class="footer-row">
+                <span class="save-indicator" id="save-status">Progress Saved!</span>
+                <button class="btn-reset" onclick="resetGame()">Reset Progress</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let gameData = { sodas: 0, totalSodasClicked: 0, sodasPerSecond: 0 };
+        let gameData = { sodas: 0, totalSodasClicked: 0, sodasPerSecond: 0, examPoints: 0 };
 
         const upgrades = [
             { id: 'headphones', name: 'Miku\'s Headphones', cost: 15, baseCost: 15, sps: 0.1, count: 0, icon: '🎧', image: 'assets/headphones.jpg', zoom: '150%' },
@@ -298,26 +353,121 @@
 
         const sodaCountEl = document.getElementById('soda-count');
         const spsCountEl = document.getElementById('sps-count');
+        const epCountEl = document.getElementById('ep-count');
         const mikuBtn = document.getElementById('miku-btn');
         const clickArea = document.getElementById('click-area');
-        const shopContainer = document.getElementById('shop-container');
+        const shopContainer = document.getElementById('actual-items');
         const saveStatusEl = document.getElementById('save-status');
+        const prestigeBtn = document.getElementById('prestige-btn');
 
         function init() {
             loadGame();
             renderShop();
             updateUI();
-            
-            // Core logic loop tick (updates decimal positions smoothly)
-            setInterval(() => {
-                gameData.sodas += (gameData.sodasPerSecond / 10);
-                updateUI();
-            }, 100);
+            initBackgroundWorker();
+        }
 
-            // Automated backup interval: Runs every 10 seconds background loop
+        /* 🚀 BACKGROUND WORKER INITIALIZATION */
+        function initBackgroundWorker() {
+            // This blob converts standard text into a safe, background thread asset.
+            const workerCode = `
+                setInterval(() => {
+                    postMessage('tick');
+                }, 100);
+            `;
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            const worker = new Worker(URL.createObjectURL(blob));
+
+            // Listen to background worker ticking events (works when tab is hidden!)
+            worker.onmessage = function(e) {
+                if (e.data === 'tick') {
+                    gameData.sodas += (gameData.sodasPerSecond / 10);
+                    updateUI();
+                }
+            };
+
+            // Automated Local Save back-up loop (10 seconds)
             setInterval(() => {
-                saveGame(true); // true means silent, background save
+                saveGame(true);
             }, 10000);
+        }
+
+        /* ☁️ CLOUD SYNC SYSTEM (Saves data instantly to an open API based on custom username) */
+        async function cloudSave() {
+            const username = document.getElementById('cloud-username').value.trim();
+            if (!username) {
+                alert("Please enter a custom profile name to sync your cloud profile!");
+                return;
+            }
+
+            const saveData = {
+                sodas: gameData.sodas,
+                totalSodasClicked: gameData.totalSodasClicked,
+                examPoints: gameData.examPoints,
+                upgradesState: upgrades.map(up => ({ id: up.id, count: up.count, cost: up.cost }))
+            };
+
+            showStatus("Saving to cloud...");
+            try {
+                // Using kvdb.io (a free cloud key-value store for prototyping games)
+                const response = await fetch(`https://kvdb.io/MNm6u38i5W8E6T1Zg6y7P1/${username}`, {
+                    method: 'POST',
+                    body: JSON.stringify(saveData)
+                });
+                if(response.ok) {
+                    localStorage.setItem('miku_cloud_user', username);
+                    showStatus("Cloud Synced Successfully!");
+                } else {
+                    alert("Cloud Sync failed. Try a different user profile name.");
+                }
+            } catch (err) {
+                alert("Network error trying to connect to cloud storage provider.");
+            }
+        }
+
+        async function cloudLoad() {
+            const username = document.getElementById('cloud-username').value.trim();
+            if (!username) {
+                alert("Please type your profile name to pull down data!");
+                return;
+            }
+
+            showStatus("Fetching cloud save...");
+            try {
+                const response = await fetch(`https://kvdb.io/MNm6u38i5W8E6T1Zg6y7P1/${username}`);
+                if (!response.ok) {
+                    alert("No cloud profile data found for that name.");
+                    return;
+                }
+                const parsedData = await response.json();
+                
+                gameData.sodas = parsedData.sodas || 0;
+                gameData.totalSodasClicked = parsedData.totalSodasClicked || 0;
+                gameData.examPoints = parsedData.examPoints || 0;
+                
+                if (parsedData.upgradesState) {
+                    parsedData.upgradesState.forEach(savedUp => {
+                        const originalUpgrade = upgrades.find(up => up.id === savedUp.id);
+                        if (originalUpgrade) {
+                            originalUpgrade.count = savedUp.count || 0;
+                            originalUpgrade.cost = savedUp.cost || originalUpgrade.baseCost;
+                        }
+                    });
+                }
+                localStorage.setItem('miku_cloud_user', username);
+                recalculateSPS();
+                renderShop();
+                updateUI();
+                showStatus("Loaded Cloud Save!");
+            } catch (err) {
+                alert("Error connecting to server data pipelines.");
+            }
+        }
+
+        function showStatus(text) {
+            saveStatusEl.textContent = text;
+            saveStatusEl.style.opacity = '1';
+            setTimeout(() => { saveStatusEl.style.opacity = '0'; }, 2500);
         }
 
         function renderShop() {
@@ -327,16 +477,15 @@
                 itemDiv.className = 'shop-item disabled';
                 itemDiv.id = `upgrade-${upgrade.id}`;
                 itemDiv.onclick = () => buyUpgrade(index);
-		
+        
                 const iconContent = upgrade.image ? '' : upgrade.icon;
-		        
                 let inlineStyle = '';
                 if (upgrade.image) {
                     const size = upgrade.zoom ? upgrade.zoom : 'cover';
                     const pos = upgrade.position ? upgrade.position : 'center';
                     inlineStyle = `style="background-image: url('${upgrade.image}'); background-size: ${size}; background-position: ${pos};"`;
                 }
-		
+        
                 itemDiv.innerHTML = `
                     <div class="item-icon" id="icon-${upgrade.id}" ${inlineStyle}>${iconContent}</div>
                     <div class="item-details">
@@ -353,6 +502,7 @@
         function updateUI() {
             sodaCountEl.textContent = `${Math.floor(gameData.sodas)} Matcha${Math.floor(gameData.sodas) === 1 ? '' : 's'}`;
             spsCountEl.textContent = `${gameData.sodasPerSecond.toFixed(1)} per second`;
+            epCountEl.textContent = `Exam Points: ${gameData.examPoints} (+${gameData.examPoints * 10}% Boost, +${gameData.examPoints} Click)`;
 
             upgrades.forEach(upgrade => {
                 const itemDiv = document.getElementById(`upgrade-${upgrade.id}`);
@@ -370,12 +520,22 @@
                     }
                 }
             });
+
+            const claimableEP = Math.floor(gameData.sodas / 25000);
+            if (claimableEP >= 1) {
+                prestigeBtn.classList.remove('disabled');
+                prestigeBtn.textContent = `Take Exam (Pass to gain +${claimableEP} Exam Points!)`;
+            } else {
+                prestigeBtn.classList.add('disabled');
+                prestigeBtn.textContent = `Take Exam (Requires 25,000 Matchas)`;
+            }
         }
 
         mikuBtn.addEventListener('click', (e) => {
-            gameData.sodas += 1;
-            gameData.totalSodasClicked += 1;
-            createFloatingText(e.clientX, e.clientY, "+1");
+            const clickValue = 1 + gameData.examPoints;
+            gameData.sodas += clickValue;
+            gameData.totalSodasClicked += clickValue;
+            createFloatingText(e.clientX, e.clientY, `+${clickValue}`);
             updateUI();
         });
 
@@ -397,43 +557,60 @@
                 upgrade.cost = upgrade.cost * 1.15;
                 recalculateSPS();
                 updateUI();
-                saveGame(true); // Save instantly on purchases so actions aren't lost
+                saveGame(true); 
             }
         }
 
         function recalculateSPS() {
             let totalSPS = 0;
             upgrades.forEach(up => totalSPS += up.count * up.sps);
-            gameData.sodasPerSecond = totalSPS;
+            gameData.sodasPerSecond = totalSPS * (1 + (gameData.examPoints * 0.1));
         }
 
-        /* LOCAL STORAGE DATA HANDLING INTERACTION WRAPPERS */
+        function prestigeGame() {
+            const pointsToGain = Math.floor(gameData.sodas / 25000);
+            if (pointsToGain < 1) return;
+
+            if (confirm(`Are you ready to help Miku pass her exams? This will reset your Matchas, but you will permanently gain ${pointsToGain} Exam Points!`)) {
+                gameData.examPoints += pointsToGain;
+                gameData.sodas = 0;
+                gameData.sodasPerSecond = 0;
+
+                upgrades.forEach(up => {
+                    up.count = 0;
+                    up.cost = up.baseCost;
+                });
+
+                recalculateSPS();
+                renderShop();
+                updateUI();
+                saveGame(true);
+            }
+        }
+
         function saveGame(isSilent = false) {
             const saveData = {
                 sodas: gameData.sodas,
                 totalSodasClicked: gameData.totalSodasClicked,
-                // Map the specific user-modified states of our upgrades
+                examPoints: gameData.examPoints,
                 upgradesState: upgrades.map(up => ({ id: up.id, count: up.count, cost: up.cost }))
             };
-            
             localStorage.setItem('mikuClicker_save', JSON.stringify(saveData));
-            
-            if (isSilent) {
-                saveStatusEl.style.opacity = '1';
-                setTimeout(() => { saveStatusEl.style.opacity = '0'; }, 1500);
-            }
+            if (isSilent) showStatus("Progress Saved!");
         }
 
         function loadGame() {
+            const savedUser = localStorage.getItem('miku_cloud_user');
+            if(savedUser) document.getElementById('cloud-username').value = savedUser;
+
             const rawSave = localStorage.getItem('mikuClicker_save');
-            if (!rawSave) return; // Exit if no prior data exists
-            
+            if (!rawSave) return; 
             try {
                 const parsedData = JSON.parse(rawSave);
                 gameData.sodas = parsedData.sodas || 0;
                 gameData.totalSodasClicked = parsedData.totalSodasClicked || 0;
+                gameData.examPoints = parsedData.examPoints || 0;
                 
-                // Reconstruct upgrades profile matching unique structural IDs
                 if (parsedData.upgradesState) {
                     parsedData.upgradesState.forEach(savedUp => {
                         const originalUpgrade = upgrades.find(up => up.id === savedUp.id);
@@ -444,27 +621,14 @@
                     });
                 }
                 recalculateSPS();
-            } catch (err) {
-                console.error("Failed parsing saved data pipeline initialization profile.", err);
-            }
+            } catch (err) {}
         }
 
         function resetGame() {
-            if (confirm("Are you sure you want to reset your study corner and clear all progress?")) {
+            if (confirm("Wipe all progress?")) {
                 localStorage.removeItem('mikuClicker_save');
-                
-                // Set conditions back to default baseline configurations
-                gameData.sodas = 0;
-                gameData.totalSodasClicked = 0;
-                gameData.sodasPerSecond = 0;
-                
-                upgrades.forEach(up => {
-                    up.count = 0;
-                    up.cost = up.baseCost;
-                });
-                
-                renderShop();
-                updateUI();
+                localStorage.removeItem('miku_cloud_user');
+                location.reload();
             }
         }
 
