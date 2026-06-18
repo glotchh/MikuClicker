@@ -200,41 +200,6 @@
         .item-cost { font-weight: bold; color: #22c55e; }
         .item-count { font-size: 1.5rem; font-weight: bold; color: var(--miku-blue); margin-left: 15px; min-width: 30px; text-align: right; }
 
-        /* Cloud Sync Panel Styling */
-        .cloud-panel {
-            background: #f1f5f9;
-            border: 2px dashed #cbd5e1;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .cloud-input {
-            width: calc(100% - 16px);
-            padding: 6px;
-            border: 1px solid #cbd5e1;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        .cloud-buttons {
-            display: flex;
-            gap: 5px;
-        }
-        .btn-cloud {
-            flex: 1;
-            background: var(--miku-blue);
-            color: white;
-            border: none;
-            padding: 6px;
-            font-weight: bold;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        .btn-cloud:hover { background: #357abd; }
-
         .shop-footer {
             padding: 15px;
             border-top: 2px solid #e2e8f0;
@@ -317,18 +282,7 @@
 
     <div class="shop-section">
         <h2 class="shop-header">Miku's Study Corner</h2>
-        <div class="shop-items" id="shop-container">
-            <!-- Cloud Sync Submenu inside shop -->
-            <div class="cloud-panel">
-                <div style="font-size: 0.85rem; font-weight: bold; color: var(--miku-dark);">🌐 Cross-Device Sync Profile</div>
-                <input type="text" class="cloud-input" id="cloud-username" placeholder="Create or Enter a unique username...">
-                <div class="cloud-buttons">
-                    <button class="btn-cloud" onclick="cloudSave()">Save to Cloud</button>
-                    <button class="btn-cloud" onclick="cloudLoad()">Load from Cloud</button>
-                </div>
-            </div>
-            <div id="actual-items"></div>
-        </div>
+        <div class="shop-items" id="shop-container"></div>
         
         <div class="shop-footer">
             <button class="btn-prestige disabled" id="prestige-btn" onclick="prestigeGame()">
@@ -344,11 +298,12 @@
     <script>
         let gameData = { sodas: 0, totalSodasClicked: 0, sodasPerSecond: 0, examPoints: 0 };
 
+        // Balanced: Lowered initial costs & higher generation metrics
         const upgrades = [
-            { id: 'headphones', name: 'Miku\'s Headphones', cost: 15, baseCost: 15, sps: 0.1, count: 0, icon: '🎧', image: 'assets/headphones.jpg', zoom: '150%' },
-            { id: 'recipe', name: 'Matcha Recipe Book', cost: 100, baseCost: 100, sps: 1, count: 0, icon: '📚', image: 'assets/recipe-book.png', zoom: '80%' },
-            { id: 'documentary', name: 'Sengoku Documentary', cost: 1100, baseCost: 1100, sps: 8, count: 0, icon: '📺', image: 'assets/documentary.png' },
-            { id: 'tutor', name: 'Private Tutor (Fuutarou)', cost: 12000, baseCost: 12000, sps: 47, count: 0, icon: '👨‍🏫', image: 'assets/tutor.png' }
+            { id: 'headphones', name: 'Miku\'s Headphones', cost: 10, baseCost: 10, sps: 0.2, count: 0, icon: '🎧', image: 'assets/headphones.jpg', zoom: '150%' },
+            { id: 'recipe', name: 'Matcha Recipe Book', cost: 60, baseCost: 60, sps: 1.5, count: 0, icon: '📚', image: 'assets/recipe-book.png', zoom: '80%' },
+            { id: 'documentary', name: 'Sengoku Documentary', cost: 500, baseCost: 500, sps: 12, count: 0, icon: '📺', image: 'assets/documentary.png' },
+            { id: 'tutor', name: 'Private Tutor (Fuutarou)', cost: 4000, baseCost: 4000, sps: 65, count: 0, icon: '👨‍🏫', image: 'assets/tutor.png' }
         ];
 
         const sodaCountEl = document.getElementById('soda-count');
@@ -356,7 +311,7 @@
         const epCountEl = document.getElementById('ep-count');
         const mikuBtn = document.getElementById('miku-btn');
         const clickArea = document.getElementById('click-area');
-        const shopContainer = document.getElementById('actual-items');
+        const shopContainer = document.getElementById('shop-container');
         const saveStatusEl = document.getElementById('save-status');
         const prestigeBtn = document.getElementById('prestige-btn');
 
@@ -369,7 +324,6 @@
 
         /* 🚀 BACKGROUND WORKER INITIALIZATION */
         function initBackgroundWorker() {
-            // This blob converts standard text into a safe, background thread asset.
             const workerCode = `
                 setInterval(() => {
                     postMessage('tick');
@@ -378,7 +332,6 @@
             const blob = new Blob([workerCode], { type: 'application/javascript' });
             const worker = new Worker(URL.createObjectURL(blob));
 
-            // Listen to background worker ticking events (works when tab is hidden!)
             worker.onmessage = function(e) {
                 if (e.data === 'tick') {
                     gameData.sodas += (gameData.sodasPerSecond / 10);
@@ -390,78 +343,6 @@
             setInterval(() => {
                 saveGame(true);
             }, 10000);
-        }
-
-        /* ☁️ CLOUD SYNC SYSTEM (Saves data instantly to an open API based on custom username) */
-        async function cloudSave() {
-            const username = document.getElementById('cloud-username').value.trim();
-            if (!username) {
-                alert("Please enter a custom profile name to sync your cloud profile!");
-                return;
-            }
-
-            const saveData = {
-                sodas: gameData.sodas,
-                totalSodasClicked: gameData.totalSodasClicked,
-                examPoints: gameData.examPoints,
-                upgradesState: upgrades.map(up => ({ id: up.id, count: up.count, cost: up.cost }))
-            };
-
-            showStatus("Saving to cloud...");
-            try {
-                // Using kvdb.io (a free cloud key-value store for prototyping games)
-                const response = await fetch(`https://kvdb.io/MNm6u38i5W8E6T1Zg6y7P1/${username}`, {
-                    method: 'POST',
-                    body: JSON.stringify(saveData)
-                });
-                if(response.ok) {
-                    localStorage.setItem('miku_cloud_user', username);
-                    showStatus("Cloud Synced Successfully!");
-                } else {
-                    alert("Cloud Sync failed. Try a different user profile name.");
-                }
-            } catch (err) {
-                alert("Network error trying to connect to cloud storage provider.");
-            }
-        }
-
-        async function cloudLoad() {
-            const username = document.getElementById('cloud-username').value.trim();
-            if (!username) {
-                alert("Please type your profile name to pull down data!");
-                return;
-            }
-
-            showStatus("Fetching cloud save...");
-            try {
-                const response = await fetch(`https://kvdb.io/MNm6u38i5W8E6T1Zg6y7P1/${username}`);
-                if (!response.ok) {
-                    alert("No cloud profile data found for that name.");
-                    return;
-                }
-                const parsedData = await response.json();
-                
-                gameData.sodas = parsedData.sodas || 0;
-                gameData.totalSodasClicked = parsedData.totalSodasClicked || 0;
-                gameData.examPoints = parsedData.examPoints || 0;
-                
-                if (parsedData.upgradesState) {
-                    parsedData.upgradesState.forEach(savedUp => {
-                        const originalUpgrade = upgrades.find(up => up.id === savedUp.id);
-                        if (originalUpgrade) {
-                            originalUpgrade.count = savedUp.count || 0;
-                            originalUpgrade.cost = savedUp.cost || originalUpgrade.baseCost;
-                        }
-                    });
-                }
-                localStorage.setItem('miku_cloud_user', username);
-                recalculateSPS();
-                renderShop();
-                updateUI();
-                showStatus("Loaded Cloud Save!");
-            } catch (err) {
-                alert("Error connecting to server data pipelines.");
-            }
         }
 
         function showStatus(text) {
@@ -490,7 +371,7 @@
                     <div class="item-icon" id="icon-${upgrade.id}" ${inlineStyle}>${iconContent}</div>
                     <div class="item-details">
                         <div class="item-name">${upgrade.name}</div>
-                        <div class="item-effect">+${upgrade.sps} Sodas/sec</div>
+                        <div class="item-effect">+${upgrade.sps} Matchas/sec</div>
                         <div class="item-cost">Cost: <span id="cost-${upgrade.id}">${Math.floor(upgrade.cost)}</span></div>
                     </div>
                     <div class="item-count" id="count-${upgrade.id}">0</div>
@@ -554,7 +435,8 @@
             if (gameData.sodas >= upgrade.cost) {
                 gameData.sodas -= upgrade.cost;
                 upgrade.count++;
-                upgrade.cost = upgrade.cost * 1.15;
+                // Balanced: Lowered standard scaling multiplier from 1.15 to 1.12
+                upgrade.cost = upgrade.cost * 1.12;
                 recalculateSPS();
                 updateUI();
                 saveGame(true); 
@@ -600,9 +482,6 @@
         }
 
         function loadGame() {
-            const savedUser = localStorage.getItem('miku_cloud_user');
-            if(savedUser) document.getElementById('cloud-username').value = savedUser;
-
             const rawSave = localStorage.getItem('mikuClicker_save');
             if (!rawSave) return; 
             try {
@@ -627,7 +506,6 @@
         function resetGame() {
             if (confirm("Wipe all progress?")) {
                 localStorage.removeItem('mikuClicker_save');
-                localStorage.removeItem('miku_cloud_user');
                 location.reload();
             }
         }
